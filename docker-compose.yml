@@ -1,0 +1,97 @@
+version: "3"
+
+networks:
+  tangle:
+    name: private-tangle
+
+services:
+  coo:
+    hostname: coo
+    # network_mode: host
+    networks:
+      - tangle
+    image: gohornet/hornet:v0.5.6
+    command: --overwriteCooAddress
+    restart: always
+    container_name: coo
+    environment:
+      COO_SEED:
+    expose:
+      - 15600
+    volumes:
+      - ./config/config-coo.json:/app/config.json:ro
+      - ./config/profiles.json:/app/profiles.json:ro
+      - ./config/peering-coo.json:/app/peering.json:ro
+      - ./db/private-tangle:/app/db
+      - ./snapshots:/app/snapshots
+
+  node:
+    hostname: node1
+    # network_mode: host
+    networks:
+      - tangle
+    image: gohornet/hornet:v0.5.6
+    command: --overwriteCooAddress
+    restart: always
+    container_name: node1
+    environment:
+      COO_SEED:
+    expose:
+      - 14265
+      - 15600
+      - 5556
+    ports:
+      - "14265:14265"
+      - "15600:15600"
+      - "8081:8081"
+    volumes:
+      - ./config/config-node.json:/app/config.json:ro
+      - ./config/profiles.json:/app/profiles.json
+      - ./config/peering-node.json:/app/peering.json
+      - ./db/private-tangle:/app/db
+      - ./snapshots:/app/snapshots
+
+  spammer:
+    hostname: spammer
+    # network_mode: host
+    networks:
+      - tangle
+    image: gohornet/hornet:v0.5.6
+    command: --overwriteCooAddress
+    restart: always
+    container_name: spammer
+    environment:
+      COO_SEED:
+    expose:
+      - 14265
+      - 15600
+    volumes:
+      - ./config/config-spammer.json:/app/config.json:ro
+      - ./config/profiles.json:/app/profiles.json
+      - ./config/peering-spammer.json:/app/peering.json
+      - ./db/private-tangle:/app/db
+      - ./snapshots:/app/snapshots
+
+  nginx:
+    # network_mode: host
+    networks:
+      - tangle
+    image: nginx
+    container_name: nginx
+    expose:
+      - 80
+    ports:
+      - 9000:80
+    volumes:
+      - ./logs:/usr/share/nginx/html
+
+  address-generator:
+    networks:
+      - tangle
+    image: node:12
+    container_name: address-generator
+    environment:
+      NPM_CONFIG_LOGLEVEL: silent
+      NODE_PATH: /package/node_modules
+    volumes:
+      - ./utils:/usr/src/app
