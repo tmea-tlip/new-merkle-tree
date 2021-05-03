@@ -116,7 +116,7 @@ startTangle () {
   clean
 
   # Initial address for the snapshot
-  generateInitialAddress
+  #generateInitialAddress
 
   # Change permissions for the snapshots
   sudo chown 39999:39999 snapshots/private-tangle
